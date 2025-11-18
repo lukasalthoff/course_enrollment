@@ -68,13 +68,13 @@ class StanfordScraperAPI:
             params = {
                 'api_key': self.api_key,
                 'url': url,
-                'render': 'false',  # Disable JS rendering for speed (enrollment is in HTML)
+                'render': 'true',  # MUST enable JS rendering for Stanford (requires cookies/JS)
                 'country_code': 'us'
             }
 
             for attempt in range(retries):
                 try:
-                    response = requests.get(self.scraper_api_url, params=params, timeout=60)
+                    response = requests.get(self.scraper_api_url, params=params, timeout=120)  # Longer timeout for JS rendering
                     if response.status_code == 200:
                         return response.text
                     elif response.status_code == 429:

@@ -21,12 +21,12 @@
 
 ### Stanford Scraper
 - **Issue:** Finding 0 courses for all departments
-- **Possible Causes:**
-  1. Stanford website structure changed
-  2. ScraperAPI having issues with Stanford's site
-  3. Year code 2025-2026 not yet available on Stanford's website
-- **Year Coverage:** Scraper only configured for 2021-2025, missing 2025-2026
-- **Status:** ⚠️  Needs investigation
+- **Root Cause:** Stanford requires JavaScript/cookies - was using `render=false`
+- **Solution:** ✅ **FIXED** - Changed to `render=true` in scraper
+- **Test Results:** Successfully scraped 200 CS courses with 64.5% enrollment coverage
+- **Performance:** ~12-13 seconds per page (JavaScript rendering overhead)
+- **Year Coverage:** Currently configured for 2021-2025 (2025-2026 link inactive on Stanford site)
+- **Status:** ✅ **WORKING**
 
 ### Harvard Data
 - **Issue:** No automated scraper (manual CSV download required)
