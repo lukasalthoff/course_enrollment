@@ -1,0 +1,41 @@
+{
+  "princeton_fixed_scraping": {
+    "timestamp": "2025-08-01T17:47:05.030932",
+    "total_courses": 11057,
+    "courses_with_enrollment": 11049,
+    "enrollment_coverage_percent": 99.9,
+    "terms_scraped": {
+      "1262": {
+        "text": "25-26 Fall",
+        "courses": 1589
+      },
+      "1254": {
+        "text": "24-25 Spr",
+        "courses": 1550
+      },
+      "1252": {
+        "text": "24-25 Fall",
+        "courses": 1625
+      },
+      "1244": {
+        "text": "23-24 Spr",
+        "courses": 1534
+      },
+      "1242": {
+        "text": "23-24 Fall",
+        "courses": 1562
+      },
+      "1234": {
+        "text": "22-23 Spr",
+        "courses": 1602
+      },
+      "1232": {
+        "text": "22-23 Fall",
+        "courses": 1595
+      }
+    },
+    "departments_covered": 108,
+    "total_enrolled_students": 191212,
+    "average_enrollment": 17.3
+  }
+}

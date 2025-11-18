@@ -21,6 +21,9 @@ ENV/
 *.swo
 *~
 
+# Local settings
+.claude/
+
 # Logs
 *.log
 log.out
