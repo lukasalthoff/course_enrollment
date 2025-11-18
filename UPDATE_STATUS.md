@@ -9,7 +9,7 @@
 |------------|------|--------------|---------|-----|--------|
 | **Princeton** | Fall 2025-26 | Aug 1, 2025 | 1,589 | 3.5 months | 🟡 Needs refresh |
 | **Stanford** | Fall 2025 (2025-26) | N/A | 0 | N/A | ❌ **MISSING** |
-| **Harvard** | Fall 2025-26 | Apr 17, 2025 | 2,177 | 7 months | 🟡 Needs refresh |
+| **Harvard** | Fall 2025-26 | **Oct 31, 2025** | **3,055** | **18 days** | ✅ **UPDATED** |
 
 ## Environment Limitations Encountered
 
@@ -31,7 +31,10 @@
 ### Harvard Data
 - **Issue:** No automated scraper (manual CSV download required)
 - **Source:** https://registrar.fas.harvard.edu/links/archive/enrollment-reports
-- **Status:** ✅ Manual update available
+- **Status:** ✅ **UPDATED - Oct 31, 2025**
+- **Previous data:** 2,177 courses (April 17, 2025)
+- **New data:** 3,055 courses (October 31, 2025)
+- **Improvement:** +878 courses (+40.3%)
 
 ## Scripts Created
 
