@@ -117,67 +117,43 @@ class BerkeleyTimeScraperAPI:
         """Get list of all courses from BerkeleyTime catalog."""
         logger.info("Fetching course catalog...")
 
-        # Try to get course list from the catalog API
-        catalog_url = f"{self.api_base}/catalog/catalog_json/"
+        # Correct API endpoint based on BerkeleyTime documentation
+        catalog_url = f"{self.base_url}/api/catalog/catalog_json/"
         catalog_data = self.get_json(catalog_url)
 
         if catalog_data:
-            logger.info(f"Found {len(catalog_data.get('courses', []))} courses in catalog")
-            return catalog_data.get('courses', [])
+            # catalog_json returns a list of courses
+            courses = catalog_data if isinstance(catalog_data, list) else []
+            logger.info(f"Found {len(courses)} courses in catalog")
+            return courses
 
-        # Fallback: scrape from the website
-        logger.info("Trying to scrape catalog from website...")
-        html = self.get_page(f"{self.base_url}/catalog")
+        logger.warning("Failed to fetch catalog from API")
+        return []
 
-        if not html:
-            return []
-
-        soup = BeautifulSoup(html, 'html.parser')
-        courses = []
-
-        # Extract course links and IDs
-        # BerkeleyTime structure may vary, this is a general approach
-        for link in soup.find_all('a', href=True):
-            if '/catalog/' in link['href']:
-                courses.append({
-                    'url': link['href'],
-                    'text': link.get_text(strip=True)
-                })
-
-        logger.info(f"Scraped {len(courses)} course links from catalog")
-        return courses
-
-    def get_enrollment_data(self, course_id, semesters=None):
+    def get_enrollment_data(self, course_id, semester, year):
         """
-        Get enrollment data for a specific course.
+        Get enrollment data for a specific course offering.
 
         Args:
             course_id: BerkeleyTime course ID
-            semesters: List of semester codes (e.g., ['2024-fall', '2024-spring'])
+            semester: Semester (e.g., 'fall', 'spring')
+            year: Year (e.g., '2024')
+
+        Returns enrollment aggregate data for the specified offering.
         """
-        # BerkeleyTime enrollment API endpoint pattern
-        # This may need adjustment based on actual API structure
-        enrollment_url = f"{self.api_base}/enrollment/course/{course_id}/"
+        # Correct API endpoint: /api/enrollment/aggregate/{course_id}/{semester}/{year}/
+        enrollment_url = f"{self.base_url}/api/enrollment/aggregate/{course_id}/{semester}/{year}/"
 
         data = self.get_json(enrollment_url)
 
-        if not data:
-            return []
+        if data:
+            # Add metadata to the response
+            if isinstance(data, dict):
+                data['course_id'] = course_id
+                data['semester'] = semester
+                data['year'] = year
 
-        enrollments = []
-
-        # Parse enrollment data structure
-        # Exact structure depends on BerkeleyTime API response
-        if isinstance(data, list):
-            for entry in data:
-                enrollments.append(entry)
-        elif isinstance(data, dict):
-            if 'enrollments' in data:
-                enrollments = data['enrollments']
-            else:
-                enrollments = [data]
-
-        return enrollments
+        return data
 
     def scrape_semester(self, semester_code):
         """
@@ -217,36 +193,75 @@ class BerkeleyTimeScraperAPI:
 
         return courses
 
-    def scrape_all(self, semesters=None):
+    def scrape_all(self, years=None, semesters=None, max_courses=None):
         """
-        Main scraping function.
+        Main scraping function using BerkeleyTime API.
 
         Args:
-            semesters: List of semester codes to scrape. If None, scrapes recent semesters.
+            years: List of years to scrape (e.g., ['2024', '2023']). Default: recent years.
+            semesters: List of semesters (e.g., ['fall', 'spring']). Default: both.
+            max_courses: Limit number of courses to scrape (for testing).
         """
-        logger.info("Starting UC Berkeley enrollment scraping...")
+        logger.info("Starting UC Berkeley enrollment scraping via BerkeleyTime API...")
 
+        # Default parameters
+        if years is None:
+            years = ['2024', '2023', '2022', '2021', '2020']
         if semesters is None:
-            # Default to recent semesters
-            semesters = [
-                '2024-fall', '2024-spring',
-                '2023-fall', '2023-spring',
-                '2022-fall', '2022-spring',
-                '2021-fall', '2021-spring',
-                '2020-fall', '2020-spring'
-            ]
+            semesters = ['fall', 'spring']
 
-        logger.info(f"Scraping {len(semesters)} semesters")
+        logger.info(f"Will scrape {len(years)} years x {len(semesters)} semesters")
 
-        for semester in semesters:
-            try:
-                self.scrape_semester(semester)
-                time.sleep(2)  # Respectful delay
-            except Exception as e:
-                logger.error(f"Error scraping semester {semester}: {e}")
-                self.stats['errors'] += 1
+        # Step 1: Get all courses from catalog
+        logger.info("Step 1: Fetching course catalog...")
+        all_courses = self.get_all_courses()
 
-        logger.info(f"Scraping complete! Total courses: {self.stats['total_courses']}")
+        if not all_courses:
+            logger.error("Failed to fetch course catalog!")
+            return []
+
+        if max_courses:
+            all_courses = all_courses[:max_courses]
+            logger.info(f"Limited to {max_courses} courses for testing")
+
+        logger.info(f"Found {len(all_courses)} courses in catalog")
+
+        # Step 2: For each course, get enrollment data for specified semesters
+        for i, course in enumerate(all_courses):
+            course_id = course.get('id') or course.get('course_id')
+
+            if not course_id:
+                logger.warning(f"Course missing ID: {course}")
+                continue
+
+            course_code = course.get('abbreviation') or course.get('course_code', 'Unknown')
+
+            if (i + 1) % 10 == 0:
+                logger.info(f"Progress: {i+1}/{len(all_courses)} courses processed")
+
+            # Get enrollment for each semester
+            for year in years:
+                for semester in semesters:
+                    try:
+                        enrollment_data = self.get_enrollment_data(course_id, semester, year)
+
+                        if enrollment_data:
+                            # Combine course info with enrollment data
+                            combined_data = {
+                                **course,
+                                **enrollment_data,
+                                'scraped_at': datetime.now().isoformat()
+                            }
+                            self.courses_data.append(combined_data)
+                            self.stats['total_courses'] += 1
+
+                        time.sleep(0.5)  # Small delay between requests
+
+                    except Exception as e:
+                        logger.debug(f"No enrollment data for {course_code} {semester} {year}: {e}")
+                        self.stats['errors'] += 1
+
+        logger.info(f"Scraping complete! Total course-semester records: {self.stats['total_courses']}")
         return self.courses_data
 
     def scrape_via_web_pages(self):
@@ -312,26 +327,47 @@ class BerkeleyTimeScraperAPI:
 
 def main():
     """Main entry point."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description='UC Berkeley Enrollment Scraper')
+    parser.add_argument('--max-courses', type=int, default=10,
+                        help='Maximum number of courses to scrape (default: 10 for testing)')
+    parser.add_argument('--years', type=str, default='2024,2023',
+                        help='Comma-separated years (default: 2024,2023)')
+    parser.add_argument('--semesters', type=str, default='fall,spring',
+                        help='Comma-separated semesters (default: fall,spring)')
+    parser.add_argument('--full', action='store_true',
+                        help='Scrape all courses (not just test mode)')
+
+    args = parser.parse_args()
+
     scraper = BerkeleyTimeScraperAPI()
 
-    print("\n" + "="*60)
-    print("UC BERKELEY ENROLLMENT SCRAPER (BerkeleyTime)")
-    print("="*60)
-    print("\nNOTE: BerkeleyTime aggregates data from Berkeley SIS.")
-    print("This scraper will attempt to access their public data.")
-    print("\nOptions:")
-    print("1. Try API endpoints (recommended)")
-    print("2. Scrape web pages (fallback)")
-    print("="*60)
+    print("\n" + "="*70)
+    print("UC BERKELEY ENROLLMENT SCRAPER (BerkeleyTime API)")
+    print("="*70)
+    print("\nUsing BerkeleyTime public API:")
+    print("- Catalog API: /api/catalog/catalog_json/")
+    print("- Enrollment API: /api/enrollment/aggregate/{id}/{semester}/{year}/")
+    print("="*70)
 
-    # Try API method first
-    print("\nAttempting API method...")
-    scraper.scrape_all()
+    # Parse arguments
+    years = args.years.split(',')
+    semesters = args.semesters.split(',')
+    max_courses = None if args.full else args.max_courses
 
-    # If no data, try web scraping
-    if not scraper.courses_data:
-        print("\nAPI method yielded no data. Trying web scraping...")
-        scraper.scrape_via_web_pages()
+    if max_courses:
+        print(f"\n⚠️  TEST MODE: Limiting to {max_courses} courses")
+        print("Use --full flag to scrape all courses")
+    else:
+        print("\n🚀 FULL MODE: Scraping all courses")
+
+    print(f"Years: {', '.join(years)}")
+    print(f"Semesters: {', '.join(semesters)}")
+    print("="*70 + "\n")
+
+    # Run scraper
+    scraper.scrape_all(years=years, semesters=semesters, max_courses=max_courses)
 
     # Save results
     scraper.save_results()
