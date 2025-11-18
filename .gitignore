@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+log.out
+scraper.log
+*.out
+
+# Checkpoints
+*.pkl
+scraper_checkpoint.pkl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large data files (uncomment if you don't want to track these)
+# *.csv
+# *.json
+
+# Temporary files
+*.tmp
+*.bak
+
