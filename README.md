@@ -28,8 +28,8 @@ This directory contains course enrollment scrapers and collected data for multip
 ### 🎓 Harvard University (`harvard/`)
 - **Status**: ✅ Data Collected
 - **Source**: https://registrar.fas.harvard.edu/links/archive/enrollment-reports?page=0
-- **Data**: 22 files across 10 academic years (2014-2025, missing 2023-2024)
-- **Academic Years**: 2014-2015 through 2024-2025
+- **Data**: 24 files across 13 academic years (2013-2026)
+- **Academic Years**: 2013-2014 through 2025-2026
 - **Semesters**: Both Fall and Spring for most years
 - **Format**: CSV files with enrollment data by course
 
@@ -75,7 +75,7 @@ All scrapers include:
 
 ### Stanford-Specific Patterns
 - **Course extraction**: Parse h2 elements with pattern `"DEPARTMENT CODE: Course Name"`
-- **Enrollment patterns**: 
+- **Enrollment patterns**:
   - `"Students enrolled: X / Y"`
   - `"enrolled: X / Y"`
   - `"X / Y students"`
@@ -90,26 +90,38 @@ All scrapers include:
 - **Anti-scraping measures**: Respectful timing prevents triggering protection
 - **Success factor**: Human-like behavior patterns essential for data access
 
-## Usage
+## Setup
 
-### Princeton
+### Quick Start (All Universities)
+```bash
+# Clone the repository
+git clone <repository-url>
+cd course_enrollment
+
+# Install all dependencies
+pip install -r requirements.txt
+```
+
+### Individual University Setup
+
+#### Princeton
 ```bash
 cd princeton/
 pip install -r requirements.txt
 python princeton_enrollment_scraper.py
 ```
 
-### Stanford
+#### Stanford
 ```bash
 cd stanford/
 pip install -r requirements.txt
 python stanford_enrollment_scraper.py
 ```
 
-### Harvard
+#### Harvard
 ```bash
 cd harvard/
-# Data already collected - 22 CSV files with enrollment data
+# Data already collected - 24 CSV files with enrollment data
 # Files follow naming: harvard_enrollment_YYYY_YYYY_semester.csv
 # Source: Harvard FAS Registrar's Office enrollment reports
 ```
@@ -138,7 +150,7 @@ cd harvard/
 - **Enrollment data** for courses that have it available
 
 ### Harvard
-- **~22 enrollment reports** across 10 academic years
+- **24 enrollment reports** across 13 academic years (2013-2026)
 - **~200+ courses** per semester
 - **Complete enrollment data** including UGrad, Grad, NonDegree, XReg, VUS, Employee counts
 - **Course details** including Course ID, Title, Department, Instructor, Section Code
@@ -147,20 +159,20 @@ cd harvard/
 
 ```
 course_enrollment/
+├── .gitignore                   # Git ignore rules
 ├── README.md                    # This file
 ├── stanford/                    # Stanford University data and scraper
 │   ├── stanford_enrollment_scraper.py
 │   ├── requirements.txt
 │   ├── stanford_enrollment.csv
-│   ├── stanford_enrollment.json
-│   ├── stanford_enrollment_YYYY_YYYY.csv
-│   └── stanford_scraping.log
-├── princeton/                   # Princeton University (complete)
+│   └── stanford_enrollment.json
+├── princeton/                   # Princeton University data and scraper
 │   ├── princeton_enrollment_scraper.py
 │   ├── requirements.txt
 │   ├── princeton_enrollment.csv
-│   ├── princeton_enrollment.json
+│   └── princeton_enrollment.json
 └── harvard/                     # Harvard University (data collected)
+    └── harvard_enrollment_YYYY_YYYY_semester.csv (24 files)
 ```
 
 ## Legal and Ethical Considerations
