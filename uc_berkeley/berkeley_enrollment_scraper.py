@@ -93,23 +93,59 @@ class BerkeleyTimeScraperAPI:
 
     def get_json(self, url, retries=3):
         """Fetch JSON data from API endpoint."""
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-            'Accept': 'application/json'
-        }
 
-        for attempt in range(retries):
-            try:
-                response = requests.get(url, headers=headers, timeout=30)
-                if response.status_code == 200:
-                    return response.json()
-                elif response.status_code == 429:
-                    logger.warning("Rate limit, waiting...")
-                    time.sleep(10)
-            except Exception as e:
-                logger.error(f"Error fetching JSON from {url}: {e}")
-                if attempt < retries - 1:
-                    time.sleep(2 ** attempt)
+        # For BerkeleyTime, we need to use ScraperAPI with rendering OR direct fetch
+        if self.api_key:
+            # Use ScraperAPI - BerkeleyTime needs JavaScript rendering
+            params = {
+                'api_key': self.api_key,
+                'url': url,
+                'render': 'true',  # Enable JavaScript rendering for BerkeleyTime
+                'country_code': 'us'
+            }
+
+            for attempt in range(retries):
+                try:
+                    logger.info(f"Fetching with ScraperAPI (render=true): {url}")
+                    response = requests.get(self.scraper_api_url, params=params, timeout=90)
+
+                    if response.status_code == 200:
+                        # Try to parse as JSON
+                        try:
+                            return response.json()
+                        except:
+                            # If not JSON, it might be HTML - log and return None
+                            logger.warning(f"Response is not JSON, got HTML/text instead")
+                            logger.debug(f"Response preview: {response.text[:200]}")
+                            return None
+                    elif response.status_code == 429:
+                        logger.warning("ScraperAPI rate limit, waiting...")
+                        time.sleep(10)
+                    else:
+                        logger.error(f"ScraperAPI status code: {response.status_code}")
+                except Exception as e:
+                    logger.error(f"ScraperAPI error: {e}")
+                    if attempt < retries - 1:
+                        time.sleep(2 ** attempt)
+        else:
+            # Direct request without ScraperAPI
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                'Accept': 'application/json'
+            }
+
+            for attempt in range(retries):
+                try:
+                    response = requests.get(url, headers=headers, timeout=30)
+                    if response.status_code == 200:
+                        return response.json()
+                    elif response.status_code == 429:
+                        logger.warning("Rate limit, waiting...")
+                        time.sleep(10)
+                except Exception as e:
+                    logger.error(f"Error fetching JSON from {url}: {e}")
+                    if attempt < retries - 1:
+                        time.sleep(2 ** attempt)
 
         return None
 
